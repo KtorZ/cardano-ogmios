@@ -1,0 +1,51 @@
+name: Post-release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v2.3.3
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.4
+
+      - name: 🔨 Build #& Test
+        working-directory: clients/TypeScript
+        run: |
+          yarn install --frozen-lockfile --non-interactive --logevel=error
+          yarn generate-schema-types
+          yarn build
+          yarn lint
+    #        yarn test
+
+      - name: 📤 Publish client package to npm registry
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          check-version: true
+          package: clients/TypeScript/packages/client/package.json
+          registry: ${{ secrets.NPM_REGISTRY }}
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: 📤 Publish REPL package to npm registry
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          check-version: true
+          package: clients/TypeScript/packages/repl/package.json
+          registry: ${{ secrets.NPM_REGISTRY }}
+          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: 📤 Publish schema package to npm registry
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          check-version: true
+          package: clients/TypeScript/packages/schema/package.json
+          registry: ${{ secrets.NPM_REGISTRY }}
+          token: ${{ secrets.NPM_TOKEN }}
